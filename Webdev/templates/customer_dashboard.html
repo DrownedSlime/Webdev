@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<h1>Welcome, {{ current_user.username }} <span style="font-size:0.6em; color: var(--secondary);">Customer Portal</span></h1>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <h3>Total Invoices</h3>
+            <div class="number">{{ total }}</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card" style="border-top: 4px solid var(--warning);">
+            <h3>Pending Payment</h3>
+            <div class="number" style="color: var(--warning);">{{ pending }}</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card" style="border-top: 4px solid var(--success);">
+            <h3>Paid</h3>
+            <div class="number" style="color: var(--success);">{{ paid_count }}</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card" style="border-top: 4px solid var(--danger);">
+            <h3>Amount Owed</h3>
+            <div class="number" style="color: var(--danger); font-size: 1.8rem;">${{ "%.2f"|format(total_owed) }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Banner if no client profile linked -->
+{% if not customer_client %}
+<div class="flash info" style="margin-bottom: 1.5rem;">
+    <i class="fas fa-info-circle"></i>
+    <div>
+        <strong>Account not linked to a client profile yet.</strong><br>
+        Ask your administrator to create a client entry matching your email address <strong>{{ current_user.email }}</strong> so your invoices appear here.
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Invoices Table -->
+<div class="content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin:0;"><i class="fas fa-file-invoice"></i> My Invoices</h2>
+        <a href="{{ url_for('customer_invoices') }}" class="btn">View All</a>
+    </div>
+
+    {% if my_invoices %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Due Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in my_invoices[:5] %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('customer_invoice_detail', invoice_id=invoice.id) }}"
+                               style="font-weight:600; color: var(--primary); text-decoration:none;">
+                                {{ invoice.invoice_number }}
+                            </a>
+                        </td>
+                        <td>{{ invoice.title or '—' }}</td>
+                        <td>{{ invoice.date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {{ invoice.due_date.strftime('%Y-%m-%d') }}
+                            {% if invoice.due_date < now and invoice.status not in ['paid', 'cancelled'] %}
+                                <span class="status overdue" style="margin-left:6px;">OVERDUE</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>${{ "%.2f"|format(invoice.total_amount) }}</strong></td>
+                        <td><span class="status {{ invoice.status }}">{{ invoice.status }}</span></td>
+                        <td>
+                            <a href="{{ url_for('customer_invoice_detail', invoice_id=invoice.id) }}" class="btn" style="padding:0.4rem 0.9rem; font-size:0.85rem;">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if invoice.status in ['sent', 'overdue'] %}
+                                <form method="POST" action="{{ url_for('update_invoice_status', invoice_id=invoice.id) }}" style="display:inline;">
+                                    <input type="hidden" name="status" value="paid">
+                                    <button type="submit" class="btn btn-success" style="padding:0.4rem 0.9rem; font-size:0.85rem;"
+                                            onclick="return confirm('Mark Invoice {{ invoice.invoice_number }} as PAID?')">
+                                        <i class="fas fa-check-circle"></i> Pay
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align:center; padding:40px; color:#999;">
+            <i class="fas fa-inbox" style="font-size:3rem; margin-bottom:1rem; display:block;"></i>
+            <p style="font-size:1.1rem;">No invoices found for your account.</p>
+            <p>Invoices sent to <strong>{{ current_user.email }}</strong> will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

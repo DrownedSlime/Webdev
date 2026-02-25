@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+    <!-- Header with PDF button at top right -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--dark); margin-bottom: 0.25rem;">
+                Invoice {{ invoice.invoice_number }}
+            </h1>
+            {% if invoice.title %}
+                <p style="color: var(--secondary); font-size: 0.95rem;">{{ invoice.title }}</p>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('customer_invoices_page') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <a href="{{ url_for('download_invoice_pdf', invoice_id=invoice.id) }}" 
+               class="btn" style="background: var(--primary); color: white; padding: 0.5rem 1rem;">
+                <i class="fas fa-file-pdf"></i> Download PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div style="margin-bottom: 1.5rem;">
+        <span class="status {{ invoice.status }}" style="font-size: 0.9rem; padding: 0.5rem 1.2rem;">
+            {{ invoice.status|upper }}
+        </span>
+        {% if invoice.due_date < now and invoice.status not in ['paid', 'cancelled'] %}
+            <span class="status overdue" style="margin-left: 10px; font-size: 0.9rem; padding: 0.5rem 1.2rem;">
+                OVERDUE
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="content" style="padding: 2rem;">
+        
+        <!-- Company and Client Info -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border);">
+            <div>
+                <h3 style="color: var(--primary); margin-bottom: 0.5rem;">From</h3>
+                <p style="margin: 0; font-weight: 600;">{{ current_user.company_name or 'Your Company' }}</p>
+                <p style="margin: 0; color: var(--secondary);">{{ current_user.email }}</p>
+            </div>
+            <div style="text-align: right;">
+                <h3 style="color: var(--primary); margin-bottom: 0.5rem;">Bill To</h3>
+                <p style="margin: 0; font-weight: 600;">{{ invoice.client.name }}</p>
+                {% if invoice.client.email %}
+                    <p style="margin: 0; color: var(--secondary);">{{ invoice.client.email }}</p>
+                {% endif %}
+                {% if invoice.client.phone %}
+                    <p style="margin: 0; color: var(--secondary);">{{ invoice.client.phone }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Invoice Details -->
+        <div style="display: flex; gap: 2rem; margin-bottom: 2rem; background: var(--light); padding: 1.5rem; border-radius: 8px;">
+            <div>
+                <span style="color: var(--secondary); font-size: 0.85rem;">Invoice Date</span>
+                <p style="font-weight: 600; margin: 0;">{{ invoice.date.strftime('%d %b %Y') }}</p>
+            </div>
+            <div>
+                <span style="color: var(--secondary); font-size: 0.85rem;">Due Date</span>
+                <p style="font-weight: 600; margin: 0; {% if invoice.due_date < now and invoice.status not in ['paid', 'cancelled'] %}color: var(--danger);{% endif %}">
+                    {{ invoice.due_date.strftime('%d %b %Y') }}
+                </p>
+            </div>
+            <div>
+                <span style="color: var(--secondary); font-size: 0.85rem;">Invoice #</span>
+                <p style="font-weight: 600; margin: 0; font-family: monospace;">{{ invoice.invoice_number }}</p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <h3 style="margin-bottom: 1rem;">Items</h3>
+        {% if invoice.items %}
+        <div class="table-wrapper" style="margin-bottom: 2rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Unit Price</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items %}
+                    <tr>
+                        <td>{{ item.description }}</td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td style="text-align: right;">${{ "%.2f"|format(item.unit_price) }}</td>
+                        <td style="text-align: right;">${{ "%.2f"|format(item.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
+            <div style="width: 300px;">
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                    <span>Subtotal:</span>
+                    <span style="font-weight: 500;">${{ "%.2f"|format(invoice.subtotal) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                    <span>Tax ({{ invoice.tax_rate }}%):</span>
+                    <span style="font-weight: 500;">${{ "%.2f"|format(invoice.tax_amount) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 1rem 0; font-size: 1.2rem; font-weight: 700;">
+                    <span>Total:</span>
+                    <span style="color: var(--primary);">${{ "%.2f"|format(invoice.total_amount) }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Notes & Terms -->
+        {% if invoice.notes or invoice.terms %}
+        <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--light); border-radius: 8px;">
+            {% if invoice.notes %}
+            <div style="margin-bottom: 1rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--primary);">Notes</h4>
+                <p style="margin: 0; white-space: pre-wrap;">{{ invoice.notes }}</p>
+            </div>
+            {% endif %}
+            {% if invoice.terms %}
+            <div>
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--primary);">Terms & Conditions</h4>
+                <p style="margin: 0; white-space: pre-wrap;">{{ invoice.terms }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Payment Button at Bottom -->
+        {% if invoice.status in ['sent', 'overdue'] %}
+        <div style="margin-top: 2rem; text-align: center; padding: 2rem; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-radius: 12px; border: 2px solid var(--success);">
+            <h3 style="color: var(--success); margin-top: 0;">
+                <i class="fas fa-credit-card"></i> Ready to Pay
+            </h3>
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">
+                Total Amount Due: <strong style="font-size: 1.8rem; color: var(--primary);">${{ "%.2f"|format(invoice.total_amount) }}</strong>
+            </p>
+            <form method="POST" action="{{ url_for('customer_pay_invoice', invoice_id=invoice.id) }}">
+                <button type="submit" class="btn btn-success"
+                        style="font-size: 1.2rem; padding: 1rem 3rem; border-radius: 50px;"
+                        onclick="return confirm('Confirm payment of ${{ '%.2f'|format(invoice.total_amount) }} for Invoice {{ invoice.invoice_number }}?')">
+                    <i class="fas fa-check-circle"></i> Confirm Payment
+                </button>
+            </form>
+            <p style="margin-top: 1rem; color: var(--secondary); font-size: 0.9rem;">
+                By clicking confirm, you acknowledge that this payment will be recorded.
+            </p>
+        </div>
+        {% elif invoice.status == 'paid' %}
+        <div style="margin-top: 2rem; text-align: center; padding: 2rem; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; color: white;">
+            <i class="fas fa-check-circle" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+            <h2 style="color: white; margin: 0 0 0.5rem 0;">Payment Confirmed! 🎉</h2>
+            <p style="font-size: 1.1rem; margin: 0;">Thank you for your payment of <strong>${{ "%.2f"|format(invoice.total_amount) }}</strong></p>
+            <p style="margin-top: 1.5rem;">
+                <a href="{{ url_for('customer_invoices_page') }}" 
+                   style="background: white; color: #059669; padding: 0.6rem 1.8rem; border-radius: 30px; text-decoration: none; font-weight: 600; display: inline-block;">
+                    <i class="fas fa-arrow-left"></i> Back to My Invoices
+                </a>
+            </p>
+        </div>
+        {% elif invoice.status == 'cancelled' %}
+        <div style="margin-top: 2rem; text-align: center; padding: 2rem; background: var(--light); border-radius: 12px;">
+            <i class="fas fa-ban" style="font-size: 3rem; color: var(--secondary); margin-bottom: 1rem;"></i>
+            <p style="color: var(--secondary); font-size: 1.1rem;">This invoice has been cancelled.</p>
+        </div>
+        {% else %}
+        <div style="margin-top: 2rem; text-align: center; padding: 2rem; background: var(--light); border-radius: 12px;">
+            <i class="fas fa-clock" style="font-size: 3rem; color: var(--secondary); margin-bottom: 1rem;"></i>
+            <p style="color: var(--secondary); font-size: 1.1rem;">This invoice is currently in <strong>{{ invoice.status }}</strong> status.</p>
+            <p>Payment will be available once the invoice is sent.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

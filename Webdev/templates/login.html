@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<h1>Login</h1>
+
+<div class="content">
+    {% if session.get('user_type') == 'admin' %}
+        <div class="flash info">
+            <strong>Administrator Login</strong><br>
+            Use your administrator credentials to access the management system.
+        </div>
+    {% elif session.get('user_type') == 'customer' %}
+        <div class="flash info">
+            <strong>Customer Login</strong><br>
+            Use your customer credentials to view and pay invoices.
+        </div>
+    {% endif %}
+    
+    <form method="POST" action="{{ url_for('login_page') }}">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required 
+               value="{% if session.get('user_type') == 'admin' %}admin{% elif session.get('user_type') == 'customer' %}customer{% endif %}">
+        
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        
+        <input type="hidden" name="user_type" value="{{ session.get('user_type', '') }}">
+        
+        <button type="submit">Login</button>
+    </form>
+    
+    <p><strong>Default Credentials:</strong></p>
+    <ul>
+        {% if session.get('user_type') == 'admin' %}
+            <li><strong>Admin:</strong> admin / admin123</li>
+        {% elif session.get('user_type') == 'customer' %}
+            <li><strong>Customer:</strong> customer / customer123</li>
+        {% else %}
+            <li><strong>Admin:</strong> admin / admin123</li>
+            <li><strong>Customer:</strong> customer / customer123</li>
+        {% endif %}
+    </ul>
+    
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('welcome_page') }}" class="btn">← Back to Role Selection</a>
+    </p>
+</div>
+{% endblock %}

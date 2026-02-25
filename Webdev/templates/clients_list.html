@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+
+{% block content %}
+<h1>Clients</h1>
+
+<div class="content">
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('create_client_page') }}" class="btn-success">➕ Add New Client</a>
+    </div>
+    
+    {% if clients %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Invoice Prefix</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td><strong>{{ client.name }}</strong></td>
+                    <td>{{ client.email or '-' }}</td>
+                    <td>{{ client.phone or '-' }}</td>
+                    <td>{{ client.address or '-' }}</td>
+                    <td>
+                        {% if client.invoice_prefix %}
+                            <span style="background: #e7f3ff; padding: 2px 6px; border-radius: 3px; font-family: monospace;">
+                                {{ client.invoice_prefix }}
+                            </span>
+                        {% else %}
+                            <span style="color: #999;">Default (INV)</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('edit_client_page', client_id=client.id) }}" class="btn">✏️ Edit</a>
+                        
+                        <form method="POST" action="{{ url_for('delete_client', client_id=client.id) }}" 
+                              style="display: inline;" 
+                              onsubmit="return confirmDelete('{{ client.name }}')">
+                            <button type="submit" class="btn-danger">🗑️ Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: #999;">
+            <p style="font-size: 18px;">No clients yet</p>
+            <p>Get started by adding your first client</p>
+            <a href="{{ url_for('create_client_page') }}" class="btn-success" style="margin-top: 20px;">➕ Add First Client</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

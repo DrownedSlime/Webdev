@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <h3>Total Invoices</h3>
+            <div class="number">{{ total_invoices }}</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <h3>Draft</h3>
+            <div class="number">{{ draft_count }}</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <h3>Sent</h3>
+            <div class="number">{{ sent_count }}</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <h3>Paid</h3>
+            <div class="number">{{ paid_count }}</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-2">
+        <div class="card">
+            <h3>Recent Invoices</h3>
+            {% if recent_invoices %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in recent_invoices %}
+                        <tr>
+                            <td><a href="{{ url_for('invoice_detail_page', invoice_id=invoice.id) }}">{{ invoice.invoice_number }}</a></td>
+                            <td>{{ invoice.client.name }}</td>
+                            <td>{{ invoice.date.strftime('%Y-%m-%d') }}</td>
+                            <td>${{ "%.2f"|format(invoice.total_amount) }}</td>
+                            <td><span class="status {{ invoice.status }}">{{ invoice.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No invoices yet. <a href="{{ url_for('create_invoice_page') }}">Create your first invoice</a></p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col">
+        <div class="card">
+            <h3>Recent Clients</h3>
+            {% if recent_clients %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in recent_clients %}
+                        <tr>
+                            <td>{{ client.name }}</td>
+                            <td>{{ client.email or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No clients yet. <a href="{{ url_for('clients_page') }}">Add your first client</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

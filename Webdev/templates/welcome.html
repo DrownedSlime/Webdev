@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="content" style="text-align: center; padding: 50px;">
+    <h1>Welcome to InvoiceFlow</h1>
+    <p>Please select your role to continue:</p>
+    
+    <div style="margin: 40px 0;">
+        <a href="{{ url_for('set_user_type', user_type='admin') }}" class="btn" style="font-size: 18px; padding: 15px 30px; margin: 10px;">
+            👑 Administrator
+        </a>
+        <a href="{{ url_for('set_user_type', user_type='customer') }}" class="btn" style="font-size: 18px; padding: 15px 30px; margin: 10px;">
+            👤 Customer
+        </a>
+    </div>
+    
+    <p><small>Choose 'Administrator' if you manage invoices and clients.<br>
+    Choose 'Customer' if you view and pay invoices.</small></p>
+</div>
+{% endblock %}

@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="invoice-detail-container">
+    <h1>
+        {{ current_user.invoice_label or 'Invoice' }} {{ invoice.invoice_number }}
+        {% if invoice.title %}
+            <small style="font-size: 0.6em; color: var(--secondary); display: block; margin-top: 5px;">
+                {{ invoice.title }}
+            </small>
+        {% endif %}
+    </h1>
+
+    <div class="content">
+        <!-- Top Navigation Bar -->
+        <div style="margin-bottom: 25px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="{{ url_for('invoices_page') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Active
+                </a>
+                
+                {% if invoice.is_completed() %}
+                    <a href="{{ url_for('completed_invoices_page') }}" class="btn btn-secondary">
+                        <i class="fas fa-check-circle"></i> View Completed
+                    </a>
+                {% endif %}
+                
+                <a href="{{ url_for('create_invoice_page') }}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Create New
+                </a>
+                
+                <a href="{{ url_for('download_invoice_pdf', invoice_id=invoice.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </a>
+            </div>
+            
+            <!-- Status Badge -->
+            <span class="status {{ invoice.status }}" style="font-size: 1rem; padding: 8px 20px;">
+                {{ invoice.status|upper }}
+            </span>
+        </div>
+
+        <!-- Editable Invoice Number -->
+        <div class="invoice-number-section" style="margin-bottom: 25px; padding: 15px; background: var(--light); border-radius: 8px;">
+            <strong style="font-size: 1.1rem;">Invoice Number:</strong>
+            <div id="invoice-number-display" style="display: inline-block; margin-left: 10px;">
+                <span style="font-family: monospace; font-size: 1.2rem; background: white; padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border);">
+                    {{ invoice.invoice_number }}
+                </span>
+                <button onclick="editInvoiceNumber()" class="btn" style="padding: 8px 15px; margin-left: 10px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+            </div>
+            <form id="invoice-number-form" method="POST" action="{{ url_for('update_invoice_number', invoice_id=invoice.id) }}" style="display: none;">
+                <input type="text" name="invoice_number" id="invoice-number-input" 
+                       value="{{ invoice.invoice_number }}" 
+                       style="width: 300px; padding: 10px; font-family: monospace; font-size: 1.2rem; display: inline-block;"
+                       required>
+                <button type="submit" class="btn btn-success" style="padding: 10px 20px;">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button type="button" onclick="cancelEditNumber()" class="btn btn-secondary" style="padding: 10px 20px;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </form>
+        </div>
+
+        <!-- Two Column Layout for Invoice Details -->
+        <div class="row" style="margin-bottom: 30px;">
+            <!-- Left Column - Invoice Details -->
+            <div class="col">
+                <div class="detail-card" style="background: var(--light); padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: var(--primary);">
+                        <i class="fas fa-info-circle"></i> Invoice Details
+                    </h3>
+                    
+                    <table style="width: 100%; border: none;">
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Date:</strong></td>
+                            <td style="padding: 8px 0; border: none;">{{ invoice.date.strftime('%Y-%m-%d') }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Due Date:</strong></td>
+                            <td style="padding: 8px 0; border: none;">
+                                {{ invoice.due_date.strftime('%Y-%m-%d') }}
+                                {% if invoice.due_date < now and invoice.status not in ['paid', 'cancelled'] %}
+                                    <span class="status overdue" style="margin-left: 10px;">OVERDUE</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Client:</strong></td>
+                            <td style="padding: 8px 0; border: none;">
+                                <strong>{{ invoice.client.name }}</strong>
+                            </td>
+                        </tr>
+                        {% if invoice.client.email %}
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Email:</strong></td>
+                            <td style="padding: 8px 0; border: none;">
+                                <a href="mailto:{{ invoice.client.email }}">{{ invoice.client.email }}</a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.client.phone %}
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Phone:</strong></td>
+                            <td style="padding: 8px 0; border: none;">{{ invoice.client.phone }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.is_automated %}
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Type:</strong></td>
+                            <td style="padding: 8px 0; border: none;">
+                                <span style="color: var(--success); font-weight: 600;">
+                                    <i class="fas fa-robot"></i> Automated
+                                </span>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.rule %}
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Rule:</strong></td>
+                            <td style="padding: 8px 0; border: none;">{{ invoice.rule.name }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Column - Amounts -->
+            <div class="col">
+                <div class="detail-card" style="background: var(--light); padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: var(--primary);">
+                        <i class="fas fa-calculator"></i> Amounts
+                    </h3>
+                    
+                    <table style="width: 100%; border: none;">
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Subtotal:</strong></td>
+                            <td style="padding: 8px 0; border: none; text-align: right;">${{ "%.2f"|format(invoice.subtotal) }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; border: none;"><strong>Tax ({{ invoice.tax_rate }}%):</strong></td>
+                            <td style="padding: 8px 0; border: none; text-align: right;">${{ "%.2f"|format(invoice.tax_amount) }}</td>
+                        </tr>
+                        <tr style="border-top: 2px solid var(--border);">
+                            <td style="padding: 15px 0 8px; border: none; font-size: 1.2rem;"><strong>Total:</strong></td>
+                            <td style="padding: 15px 0 8px; border: none; text-align: right; font-size: 1.4rem; font-weight: bold; color: var(--primary);">
+                                ${{ "%.2f"|format(invoice.total_amount) }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <h3 style="margin-bottom: 15px;">
+            <i class="fas fa-list"></i> Invoice Items
+        </h3>
+        {% if invoice.items %}
+            <div class="table-wrapper" style="margin-bottom: 30px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items %}
+                        <tr>
+                            <td>{{ item.description }}</td>
+                            <td style="text-align: center;">{{ item.quantity }}</td>
+                            <td style="text-align: right;">${{ "%.2f"|format(item.unit_price) }}</td>
+                            <td style="text-align: right;">${{ "%.2f"|format(item.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot style="background: var(--light); font-weight: bold;">
+                        <tr>
+                            <td colspan="3" style="text-align: right;">Subtotal:</td>
+                            <td style="text-align: right;">${{ "%.2f"|format(invoice.subtotal) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="text-align: right;">Tax ({{ invoice.tax_rate }}%):</td>
+                            <td style="text-align: right;">${{ "%.2f"|format(invoice.tax_amount) }}</td>
+                        </tr>
+                        <tr style="background: var(--primary); color: white;">
+                            <td colspan="3" style="text-align: right;">Total:</td>
+                            <td style="text-align: right;">${{ "%.2f"|format(invoice.total_amount) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-warning" style="margin-bottom: 30px;">
+                <i class="fas fa-exclamation-triangle"></i> No items in this invoice.
+            </div>
+        {% endif %}
+
+        <!-- Notes & Terms Section -->
+        <div class="row" style="margin-bottom: 30px;">
+            {% if invoice.notes %}
+            <div class="col">
+                <div class="detail-card" style="background: var(--light); padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-top: 0;">
+                        <i class="fas fa-sticky-note"></i> Notes
+                    </h3>
+                    <p style="white-space: pre-wrap; margin: 0;">{{ invoice.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if invoice.terms %}
+            <div class="col">
+                <div class="detail-card" style="background: var(--light); padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-top: 0;">
+                        <i class="fas fa-file-contract"></i> Terms & Conditions
+                    </h3>
+                    <p style="white-space: pre-wrap; margin: 0;">{{ invoice.terms }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions Section -->
+        <div style="margin-top: 30px; background: var(--light); padding: 25px; border-radius: 8px;">
+            <h3 style="margin-top: 0; margin-bottom: 20px;">
+                <i class="fas fa-tasks"></i> Invoice Actions
+            </h3>
+            
+            <div style="margin-bottom: 25px;">
+                <strong style="display: block; margin-bottom: 15px; font-size: 1.1rem;">Change Status:</strong>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <form method="POST" action="{{ url_for('update_invoice_status', invoice_id=invoice.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="draft">
+                        <button type="submit" class="btn {% if invoice.status == 'draft' %}btn-secondary{% else %}btn-warning{% endif %}" 
+                                onclick="return confirmStatusChange('draft')" 
+                                {% if invoice.status == 'draft' %}disabled{% endif %}>
+                            <i class="fas fa-pencil-alt"></i> Draft
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('update_invoice_status', invoice_id=invoice.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="sent">
+                        <button type="submit" class="btn {% if invoice.status == 'sent' %}btn-secondary{% endif %}" 
+                                onclick="return confirmStatusChange('sent')"
+                                {% if invoice.status == 'sent' %}disabled{% endif %}>
+                            <i class="fas fa-paper-plane"></i> Sent
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('update_invoice_status', invoice_id=invoice.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="overdue">
+                        <button type="submit" class="btn {% if invoice.status == 'overdue' %}btn-secondary{% else %}btn-danger{% endif %}" 
+                                onclick="return confirmStatusChange('overdue')"
+                                {% if invoice.status == 'overdue' %}disabled{% endif %}>
+                            <i class="fas fa-exclamation-triangle"></i> Overdue
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('update_invoice_status', invoice_id=invoice.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="paid">
+                        <button type="submit" class="btn {% if invoice.status == 'paid' %}btn-secondary{% else %}btn-success{% endif %}" 
+                                onclick="return confirmStatusChange('paid')"
+                                {% if invoice.status == 'paid' %}disabled{% endif %}>
+                            <i class="fas fa-check-circle"></i> Mark as Paid
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('update_invoice_status', invoice_id=invoice.id) }}" style="display: inline;">
+                        <input type="hidden" name="status" value="cancelled">
+                        <button type="submit" class="btn {% if invoice.status == 'cancelled' %}btn-secondary{% else %}btn-secondary{% endif %}" 
+                                onclick="return confirmStatusChange('cancelled')"
+                                {% if invoice.status == 'cancelled' %}disabled{% endif %}>
+                            <i class="fas fa-ban"></i> Cancel Invoice
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <hr style="margin: 25px 0; border-color: var(--border);">
+            
+            <div>
+                <strong style="display: block; margin-bottom: 15px; font-size: 1.1rem; color: var(--danger);">Danger Zone:</strong>
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <form method="POST" action="{{ url_for('delete_invoice', invoice_id=invoice.id) }}" 
+                          onsubmit="return confirmDelete('Invoice {{ invoice.invoice_number }}')">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Delete Invoice
+                        </button>
+                    </form>
+                    <small style="color: var(--secondary);">
+                        <i class="fas fa-info-circle"></i> This action cannot be undone
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.invoice-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.invoice-detail-container h1 {
+    margin-bottom: 20px;
+    color: var(--dark);
+}
+
+.detail-card {
+    height: 100%;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+button:disabled:hover {
+    transform: none;
+}
+
+/* Alert styles */
+.alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .invoice-number-section > div {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #invoice-number-display {
+        margin-left: 0;
+    }
+    
+    #invoice-number-form input {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+}
+</style>
+
+<script>
+function editInvoiceNumber() {
+    document.getElementById('invoice-number-display').style.display = 'none';
+    document.getElementById('invoice-number-form').style.display = 'block';
+    document.getElementById('invoice-number-input').focus();
+    document.getElementById('invoice-number-input').select();
+}
+
+function cancelEditNumber() {
+    document.getElementById('invoice-number-display').style.display = 'inline-block';
+    document.getElementById('invoice-number-form').style.display = 'none';
+}
+
+function confirmStatusChange(status) {
+    const messages = {
+        'draft': 'Move this invoice back to DRAFT?',
+        'sent': 'Mark this invoice as SENT?',
+        'paid': 'Mark this invoice as PAID? This will move it to completed invoices.',
+        'overdue': 'Mark this invoice as OVERDUE?',
+        'cancelled': 'Cancel this invoice? This will move it to completed invoices.'
+    };
+    return confirm(messages[status] || 'Change invoice status to ' + status + '?');
+}
+
+function confirmDelete(itemName) {
+    return confirm('Are you sure you want to delete ' + itemName + '? This action cannot be undone.');
+}
+</script>
+{% endblock %}

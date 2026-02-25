@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Create New Client{% endblock %}
+
+{% block content %}
+<h1>Create New Client</h1>
+
+<div class="content">
+    <form method="POST" action="{{ url_for('create_client_page') }}">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col">
+                {{ form.name.label }}
+                {{ form.name(class="form-control") }}
+                {% if form.name.errors %}
+                    <div class="form-error">
+                        {% for error in form.name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col">
+                {{ form.email.label }}
+                {{ form.email(class="form-control", placeholder="client@example.com") }}
+                {% if form.email.errors %}
+                    <div class="form-error">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                {{ form.phone.label }}
+                {{ form.phone(class="form-control", placeholder="91234567 or +6591234567") }}
+                <div class="form-help">Singapore phone format: 8/9XXXXXXX (mobile) or 6XXXXXXX (landline)</div>
+                {% if form.phone.errors %}
+                    <div class="form-error">
+                        {% for error in form.phone.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col">
+                {{ form.invoice_prefix.label }}
+                {{ form.invoice_prefix(class="form-control", placeholder="e.g., ACME, TECH") }}
+                <div class="form-help">Custom prefix for invoices (e.g., ACME-202502-0001)</div>
+            </div>
+        </div>
+        
+        <div>
+            {{ form.address.label }}
+            {{ form.address(class="form-control", rows="3", placeholder="Full address") }}
+            {% if form.address.errors %}
+                <div class="form-error">
+                    {% for error in form.address.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div style="margin-top: 20px;">
+            {{ form.submit(class="btn-success") }}
+            <a href="{{ url_for('clients_page') }}" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #4a6fa5;
+        box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.1);
+    }
+</style>
+{% endblock %}

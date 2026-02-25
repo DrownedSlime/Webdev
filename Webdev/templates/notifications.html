@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<style>
+    .notifications-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .notification-item {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        transition: all 0.3s ease;
+    }
+    
+    .notification-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-color: #007bff;
+    }
+    
+    .notification-item.unread {
+        background: #e7f3ff;
+        border-left: 4px solid #007bff;
+    }
+    
+    .notification-content {
+        flex: 1;
+    }
+    
+    .notification-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .notification-message {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .notification-time {
+        color: #999;
+        font-size: 12px;
+    }
+    
+    .notification-action {
+        display: flex;
+        gap: 10px;
+        margin-left: 15px;
+    }
+    
+    .mark-read-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .mark-read-btn:hover {
+        background: #0056b3;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+    
+    .empty-state h2 {
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .test-btn {
+        background: #28a745;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .test-btn:hover {
+        background: #218838;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #007bff; padding-bottom: 15px;">
+    <div>
+        <h1>Notifications</h1>
+        <p style="color: #666; margin-top: 5px;">You have {{ notifications|length }} notification(s)</p>
+    </div>
+    <a href="{{ url_for('test_notif') }}" class="test-btn">Create Test Notification</a>
+</div>
+
+{% if notifications %}
+    <ul class="notifications-list">
+        {% for notification in notifications %}
+            <li class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                <div class="notification-content">
+                    <div class="notification-title">{{ notification.title }}</div>
+                    <div class="notification-message">{{ notification.message }}</div>
+                    <div class="notification-time">{{ notification.created_at | to_sg_time }}</div>
+                </div>
+                {% if not notification.is_read %}
+                    <div class="notification-action">
+                        <form method="POST" action="{{ url_for('mark_notification_read', id=notification.id) }}" style="margin: 0;">
+                            <button type="submit" class="mark-read-btn">Mark as Read</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <span style="background: #e8e8e8; color: #666; padding: 6px 12px; border-radius: 4px; font-size: 12px; white-space: nowrap;">Read</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h2>No Notifications</h2>
+        <p>You don't have any notifications yet. Click the button above to create a test notification.</p>
+    </div>
+{% endif %}
+
+{% endblock %}

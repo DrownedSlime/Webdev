@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvoiceFlow - {% block title %}Invoice System{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ===== INTEGRATED STYLES ===== */
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #6b7280;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            background: #f1f5f9;
+            color: var(--dark);
+            min-height: 100vh;
+        }
+
+        /* ===== NAVIGATION ===== */
+nav {
+    background: var(--dark);
+    color: white;
+    padding: 0;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 60px;
+    flex-wrap: nowrap;
+    gap: 0;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+}
+
+.nav-brand {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 0;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    flex-wrap: nowrap;
+}
+
+.nav-links li {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.nav-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0 0.75rem;
+    height: 100%;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: white;
+    background: rgba(255,255,255,0.06);
+    border-bottom-color: var(--primary);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+        /* ===== PROFILE DROPDOWN ===== */
+        .user-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .user-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #cbd5e1;
+            background: transparent;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s;
+            user-select: none;
+            font-family: inherit;
+        }
+
+        .user-trigger:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .user-role {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-left: 0.25rem;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            min-width: 240px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            padding: 0.5rem;
+            display: none;
+            z-index: 999;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-dropdown .user-info {
+            padding: 0.75rem 0.85rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .user-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.75rem 0.85rem;
+            border-radius: 10px;
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .user-dropdown a:hover {
+            background: var(--light);
+        }
+
+        .user-dropdown .profile-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0.4rem 0;
+        }
+
+        /* Container and Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .content {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+        .btn-success:hover { background: #059669; }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+        .btn-danger:hover { background: #dc2626; }
+
+        .btn-warning {
+            background: var(--warning);
+            color: #000;
+        }
+        .btn-warning:hover { background: #d97706; }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+        .btn-secondary:hover { background: #4b5563; }
+
+        /* Status badges */
+        .status {
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            display: inline-block;
+        }
+        .status.draft { background: #fef3c7; color: #92400e; }
+        .status.sent { background: #dbeafe; color: #1d4ed8; }
+        .status.paid { background: #d1fae5; color: #065f46; }
+        .status.overdue { background: #fee2e2; color: #991b1b; }
+        .status.cancelled { background: #e2e8f0; color: #475569; } /* added */
+
+        /* Cards */
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        .card h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Grid */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .col { flex: 1; min-width: 0; }
+        .col-2 { flex: 2; }
+        .col-3 { flex: 3; }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th {
+            background: var(--light);
+            padding: 1rem;
+            font-weight: 600;
+            text-align: left;
+            color: var(--secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        td {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        tr:hover { background: #f8fafc; }
+
+        /* Flash messages */
+        .flash-messages { margin: 1rem 0; }
+        .flash {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .flash.success {
+            background: #f0fdf4;
+            color: #15803d;
+            border-left-color: var(--success);
+        }
+        .flash.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border-left-color: var(--danger);
+        }
+        .flash.info {
+            background: #f0f9ff;
+            color: #0369a1;
+            border-left-color: var(--info);
+        }
+
+        /* Forms */
+        .form-group { margin-bottom: 1.5rem; }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .form-help { font-size: 0.85rem; color: var(--secondary); margin-top: 0.25rem; }
+        .form-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.25rem; }
+
+        /* Template toolbar */
+        .template-toolbar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px dashed var(--border);
+        }
+        .draggable {
+            cursor: move;
+            border: 2px dashed var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background: #f9fafb;
+        }
+        .draggable:hover {
+            border-color: var(--primary);
+            background: #eef2ff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container { overflow-x: auto; }
+            .nav-links a { padding: 0 0.5rem; font-size: 0.8rem; }
+            .row { flex-direction: column; }
+            .col, .col-2, .col-3 { flex: none; }
+        }
+
+        .confirm-action { display: inline; } 
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-container">
+
+        <!-- Left: Brand + Links -->
+        <div class="nav-left">
+            <a href="{{ url_for('dashboard') }}" class="nav-brand">
+                <i class="fas fa-file-invoice-dollar"></i> InvoiceFlow
+            </a>
+            {% if current_user.is_authenticated %}
+                <ul class="nav-links">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin() %}
+                            {# Admin sees dashboard #}
+                            <li><a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                        {% endif %}
+                        {% if current_user.is_admin() %}
+                            {# ── ADMIN ONLY LINKS ── #}
+                            <li><a href="{{ url_for('create_invoice_page') }}" class="{{ 'active' if request.endpoint == 'create_invoice_page' }}"><i class="fas fa-plus"></i> Create Invoice</a></li>
+                            <li><a href="{{ url_for('invoices_page') }}" class="{{ 'active' if request.endpoint == 'invoices_page' }}"><i class="fas fa-file-invoice"></i> Invoices</a></li>
+                            <li><a href="{{ url_for('completed_invoices_page') }}" class="{{ 'active' if request.endpoint == 'completed_invoices_page' }}"><i class="fas fa-check-circle"></i> Completed</a></li>
+                            <li><a href="{{ url_for('clients_page') }}" class="{{ 'active' if request.endpoint in ['clients_page','create_client_page','edit_client_page'] }}"><i class="fas fa-users"></i> Clients</a></li>
+                            <li><a href="{{ url_for('notifications_page') }}" class="{{ 'active' if request.endpoint == 'notifications_page' }}"><i class="fas fa-bell"></i> Notifications</a></li>
+                        {% else %}
+                        {# ── CUSTOMER ONLY LINKS ── #}
+                        <li><a href="{{ url_for('customer_invoices_page') }}" class="{{ 'active' if request.endpoint == 'customer_invoices_page' }}"><i class="fas fa-file-invoice"></i> My Invoices</a></li>
+                        <li><a href="{{ url_for('customer_all_invoices_page') }}" class="{{ 'active' if request.endpoint == 'customer_all_invoices_page' }}"><i class="fas fa-history"></i> All Records</a></li>
+                        <li><a href="{{ url_for('notifications_page') }}" class="{{ 'active' if request.endpoint == 'notifications_page' }}"><i class="fas fa-bell"></i> Notifications</a></li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <!-- Right: User menu -->
+        <div class="nav-right">
+            {% if current_user.is_authenticated %}
+                <div class="user-menu">
+                    <button class="user-trigger" onclick="toggleUserMenu()">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Welcome, {{ current_user.username }}</span>
+                        <span class="user-role">{{ current_user.role }}</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.75rem; opacity: 0.7;"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-info">
+                            Logged in as <strong>{{ current_user.username }}</strong>
+                        </div>
+                        <a href="{{ url_for('settings_page') }}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <div class="profile-divider"></div>
+                        <a href="{{ url_for('logout_page') }}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</nav>
+
+    <div class="container">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif category == 'error' %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- JavaScript: dropdown toggle and click-outside -->
+    <script>
+        // Toggle user dropdown menu (click)
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.user-trigger') && !event.target.closest('.user-trigger')) {
+                const dropdown = document.getElementById('userDropdown');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }
+
+        // Confirmation functions (from second template)
+        function confirmDelete(itemName) {
+            return confirm('Are you sure you want to delete ' + itemName + '? This action cannot be undone.');
+        }
+
+        function confirmStatusChange(status) {
+            const messages = {
+                'paid': 'Mark this invoice as PAID? This will move it to completed invoices.',
+                'cancelled': 'Cancel this invoice? This will move it to completed invoices.',
+                'overdue': 'Mark this invoice as OVERDUE?',
+                'sent': 'Mark this invoice as SENT?',
+                'draft': 'Move this invoice back to DRAFT?'
+            };
+            return confirm(messages[status] || 'Change invoice status to ' + status + '?');
+        }
+    </script>
+</body>
+</html>

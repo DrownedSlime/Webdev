@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+    <!-- Page Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--dark); margin-bottom: 0.25rem;">
+                <i class="fas fa-users" style="color: var(--primary);"></i> Clients
+            </h1>
+            <p style="color: var(--secondary); font-size: 0.95rem;">Manage your clients and their details.</p>
+        </div>
+        <a href="{{ url_for('create_client_page') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add New Client
+        </a>
+    </div>
+
+    <!-- Client Table -->
+    {% if clients %}
+    <div class="content" style="padding: 0; overflow: hidden;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Invoice Prefix</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td><strong>{{ client.name }}</strong></td>
+                    <td>
+                        {% if client.email %}
+                            <a href="mailto:{{ client.email }}" style="color: var(--primary); text-decoration: none;">
+                                {{ client.email }}
+                            </a>
+                        {% else %}
+                            <span style="color: #bbb;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--secondary);">{{ client.phone or '—' }}</td>
+                    <td style="color: var(--secondary); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ client.address or '—' }}
+                    </td>
+                    <td>
+                        {% if client.invoice_prefix %}
+                            <span style="background: #e7f3ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; font-weight: 600;">
+                                {{ client.invoice_prefix }}
+                            </span>
+                        {% else %}
+                            <span style="color: #bbb; font-size: 0.875rem;">Default (INV)</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        <a href="{{ url_for('edit_client_page', client_id=client.id) }}"
+                           class="btn"
+                           style="padding: 0.375rem 0.8rem; font-size: 0.8rem; margin-right: 5px;">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <form method="POST"
+                              action="{{ url_for('delete_client', client_id=client.id) }}"
+                              style="display: inline;"
+                              onsubmit="return confirmDelete('{{ client.name }}')">
+                            <button type="submit"
+                                    class="btn-danger"
+                                    style="display: inline-flex; align-items: center; gap: 0.35rem;
+                                           padding: 0.375rem 0.8rem; font-size: 0.8rem; border: none;
+                                           border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary -->
+    <div style="margin-top: 1rem; color: var(--secondary); font-size: 0.875rem; text-align: right;">
+        {{ clients|length }} client{{ 's' if clients|length != 1 else '' }} total
+    </div>
+
+    {% else %}
+    <div class="content" style="text-align: center; padding: 60px 40px; color: var(--secondary);">
+        <i class="fas fa-users" style="font-size: 3.5rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">No clients yet</p>
+        <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">Get started by adding your first client.</p>
+        <a href="{{ url_for('create_client_page') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add First Client
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
